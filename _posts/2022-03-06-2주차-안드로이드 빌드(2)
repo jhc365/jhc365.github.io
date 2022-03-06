@@ -1,0 +1,111 @@
+---
+layout: post
+title: 2주차-안드로이드 빌드(2)
+
+excerpt: 안드로이드 10 r32 빌드(2)
+
+date: 2022-03-06
+last_modified_at: 2022-03-06
+---
+
+이전에 사용한 vmware 16 가상머신과 ubuntu 20.04 버전을 그대로 사용하였다.
+
+저번 빌드 오류가 발생한 파일은 모두 삭제한 후 repo를 이용해 안드로이드 10 r36버전을 새로 다운로드 받았다.
+
+<H2>libcurses 5 설치</H2>
+
+이전에 발생한 오류 문구를 읽어보니 libcurses5 파일을 찾을 수 없다는 내용이었다. 구글에 검색해보니 apt install 명령어로 간단히 설치 할 수 있었다.
+
+<pre><code>$ sudo apt install ilbcurses5</code><pre>
+
+![_config.yml]({{ site.baseurl }}/images/2w/libcurses.png)
+
+<H2>swap 메모리 설정</H2>
+
+오동준 학생의 프로젝트 블로그에서 작성된 방법대로 메모리 부족으로 인한 오류를 방지하기 위하여 swap 메모리를 설정한다.
+
+<pre>
+<code>$ sudo swapoff -v /swapfile</code>
+
+<code>$ sudo fallocate -l 12G /swapfile \n
+#swap을 12기가로 설정한다.</code>
+
+<code>$ sudo chmod 600 /swapfile</code>
+
+<code>$ sudo mkswap /swapfile</code>
+
+<code>$ sudo swapon /swapfile</code>
+
+<code>$ free -m</code>
+<pre>
+
+![_config.yml]({{ site.baseurl }}/images/2w/swap.png)
+
+<H2>안드로이드 프레임워크 다운로드</H2>
+
+이전에 수행했던대로 repo를 이용해 branch를 지정해주고 안드로이드 프레임워크를 다운로드 받는다.
+
+<pre>
+<code>$ repo init -u https://android.googlesource.com/platform/manifest -b android-10.0.0_r36 -c --depth=1 --no-tags</code>
+
+<code>$ repo sync -q -c --no-tags</code>
+
+<code>$ repo start android-10.0.0_r36 --all</code>
+</pre>
+
+no tags 옵션을 이용해 개발중에 작성된 tag를 다운받지 않아 용량을 줄였다.
+
+<H2>Mac OS용 빌드 툴 체인 삭제</H2>
+
+다운로드한 프레임워크 파일에는 현재 사용할 리눅스 이외에도 Mac OS용 빌드 툴이 포함되어 있다.
+해당 파일을 삭제하여 용량을 줄이기 위해 아래 명령어를 사용한다.
+
+<pre>
+<code>$ find ./prebuilts/ -name "*darwin-x86*" -type d</code>
+
+<code>$ find ./prebuilts/ -name "*darwin-x86*" -type d -exec rm -rf {} \;</code>
+
+<code>$ find ./.repo -name "*darwin-x86*" -type d </code>
+
+<code>$ find ./.repo -name "*darwin-x86*" -type d -exec rm -rf {} \; </code>
+</pre>
+
+<H2>안드로이드 프레임워크 빌드</H2>
+
+프레임워크 빌드는 저번주와 같이 진행한다.
+
+<pre>
+<code>$ sudo chmod -R 777 .</code>
+</pre>
+
+권한 오류를 방지하기 위해 현재 사용자에게 읽기/쓰기 권한을 모두 부여한다.
+
+![_config.yml]({{ site.baseurl }}/images/2w/lunch.png)
+
+<pre>
+<code>$ . build/envsetup.sh</code>
+
+<code>$ lunch aosp_taimen-userdebug </code>
+
+<code>$ m </code>
+</pre>
+
+envsetup.sh로 빌드 스크립트를 초기화 한 후 lunch를 사용해 빌드 타겟을 설정한다.
+현재 빌드하려는 안드로이드 10 r_36버전은 pixel 2, pixel 2 xl 기기를 대상으로 빌드된다.
+taimen 타켓은 pixel 2 xl 기기를 대상으로 하는 빌드 타겟으로 aosp_taimen-userdebug를 옵션으로 사용하여 lunch한다.
+
+이후 m 명령어로 빌드를 수행한다. -jN 옵션으로 사용하는 스레드의 수를 임의로 지정할 수 있다.
+
+![_config.yml]({{ site.baseurl }}/images/2w/success.png)
+
+약 3시간이 걸려 빌드가 성공하였다. 가상머신 상에서 외장 ssd를 이용해 빌드를 진행하여서 그런건지는 모르겠으나 상당히 긴 시간을 필요로 하였다.
+
+![_config.yml]({{ site.baseurl }}/images/2w/emul.png)
+
+<pre>
+<code>$ emulator</code>
+</pre>
+
+emulator 명령어를 사용해 에뮬레이터를 실행시켜 보았으나 검은 화면에서 더이상 진행되지 않았다. 
+기기 사양 문제인지 빌드 문제인지는 확실치 않으나 정보를 더 찾아보아야 할 것 같다.
+
